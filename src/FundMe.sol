@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {PriceConverter} from "./PriceConverter.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 error NotOwner();
 
@@ -16,18 +17,20 @@ contract FundMe {
 
     //immutable only initialized inline or in constructor
     address public immutable owner;
+    AggregatorV3Interface private immutable priceFeed;
 
-    constructor() {
+    constructor(address _priceFeed) {
         owner = msg.sender;
+        priceFeed = AggregatorV3Interface(_priceFeed);
     }
 
     function getVersion() public view returns (uint256) {
-        return PriceConverter.getVersion();
+        return PriceConverter.getVersion(priceFeed);
     }
 
     function fund() public payable {
         require(
-            msg.value.getConversionRate() > MINIMUM_USD,
+            msg.value.getConversionRate(priceFeed) > MINIMUM_USD,
             "did not send enough funds"
         );
         funders.push(msg.sender);
