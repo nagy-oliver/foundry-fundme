@@ -11,9 +11,9 @@ contract FundMe {
 
     uint256 public constant MINIMUM_USD = 5e18;
 
-    address[] private funders;
+    address[] private s_funders;
     mapping(address funder => uint256 amountFunded)
-        private addressToAmountFunded;
+        private s_addressToAmountFunded;
 
     //immutable only initialized inline or in constructor
     address private immutable owner;
@@ -33,20 +33,22 @@ contract FundMe {
             msg.value.getConversionRate(priceFeed) > MINIMUM_USD,
             "did not send enough funds"
         );
-        funders.push(msg.sender);
-        addressToAmountFunded[msg.sender] += msg.value;
+        s_funders.push(msg.sender);
+        s_addressToAmountFunded[msg.sender] += msg.value;
     }
 
     function withdraw() public onlyOwner {
+        uint256 fundersLength = s_funders.length;
+
         for (
             uint256 funderIndex = 0;
-            funderIndex < funders.length;
+            funderIndex < fundersLength;
             funderIndex++
         ) {
-            address funder = funders[funderIndex];
-            addressToAmountFunded[funder] = 0;
+            address funder = s_funders[funderIndex];
+            s_addressToAmountFunded[funder] = 0;
         }
-        funders = new address[](0);
+        s_funders = new address[](0);
 
         //transfer, throws error if something
         // payable(msg.sender).transfer(address(this).balance);
@@ -81,11 +83,11 @@ contract FundMe {
     //GETTERS
 
     function getFunderByIndex(uint index) external view returns (address) {
-        return funders[index];
+        return s_funders[index];
     }
 
     function getAmountFunded(address funder) external view returns (uint256) {
-        return addressToAmountFunded[funder];
+        return s_addressToAmountFunded[funder];
     }
 
     function getOwner() external view returns (address) {
