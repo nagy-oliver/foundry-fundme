@@ -11,12 +11,12 @@ contract FundMe {
 
     uint256 public constant MINIMUM_USD = 5e18;
 
-    address[] public funders;
+    address[] private funders;
     mapping(address funder => uint256 amountFunded)
-        public addressToAmountFunded;
+        private addressToAmountFunded;
 
     //immutable only initialized inline or in constructor
-    address public immutable owner;
+    address private immutable owner;
     AggregatorV3Interface private immutable priceFeed;
 
     constructor(address _priceFeed) {
@@ -37,7 +37,7 @@ contract FundMe {
         addressToAmountFunded[msg.sender] += msg.value;
     }
 
-    function widthdraw() public onlyOwner {
+    function withdraw() public onlyOwner {
         for (
             uint256 funderIndex = 0;
             funderIndex < funders.length;
@@ -62,6 +62,7 @@ contract FundMe {
 
     modifier onlyOwner() {
         if (msg.sender != owner) {
+            // takes less gas than require
             revert NotOwner();
         }
         _;
@@ -75,5 +76,19 @@ contract FundMe {
     // for data sent with calldata not matching an existing function
     fallback() external payable {
         fund();
+    }
+
+    //GETTERS
+
+    function getFunderByIndex(uint index) external view returns (address) {
+        return funders[index];
+    }
+
+    function getAmountFunded(address funder) external view returns (uint256) {
+        return addressToAmountFunded[funder];
+    }
+
+    function getOwner() external view returns (address) {
+        return owner;
     }
 }
